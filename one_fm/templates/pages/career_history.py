@@ -18,7 +18,11 @@ def get_context(context):
 
         check_career_history = frappe.db.exists({"doctype": "Career History", "job_applicant": job_applicant.name})
         if check_career_history is not None:
-            context.applicant_career_history_draft = frappe.get_doc("Career History", check_career_history)
+            career_history = frappe.get_doc("Career History", check_career_history)
+            context.applicant_career_history_draft = career_history
+            context.list_of_career_history = career_history.career_history_company
+            print(career_history)
+            print(career_history.career_history_company)
 
 
     # Get Country List to the context to show in the portal
