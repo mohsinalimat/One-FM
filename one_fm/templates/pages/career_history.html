@@ -5,9 +5,15 @@
 {% endblock %}
 
 {% block script %}
+{% if applicant_career_history_draft %}
+	<script>
+		{% include "templates/pages/career_history_drafts.js" %}
+	</script>
+{% else %}
   	<script>
   		{% include 'templates/pages/career_history.js' %}
 	</script>
+{% endif %}	
 {% endblock %}
 {% block header %}
 <head>
@@ -43,6 +49,9 @@
 	</div>
 	<div class="submit-btn col-sm-12 ">
 		<button class="btn btn-dark float-right btn-submit-career-history" type="button">{{ _("Submit") }}</button>
+	</div>
+	<div class="save-btn col-sm-12 ">
+		<button class="btn btn-dark float-right btn-save-career-history" type="button">{{ _("Save") }}</button>
 	</div>
 
 </body>

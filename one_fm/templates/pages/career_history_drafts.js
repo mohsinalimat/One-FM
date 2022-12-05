@@ -167,6 +167,7 @@ career_history = Class.extend({
       $('.back-btn').fadeIn();
       this.back_career_history(company_no);
     }
+
     var company_section_html = `
     <div class="section_${company_no}">
     <h3 class="mx-auto">Hello, {{job_applicant.applicant_name}}, tell us about the ${stringifyNumber(company_no)} company you worked for!</h3>
