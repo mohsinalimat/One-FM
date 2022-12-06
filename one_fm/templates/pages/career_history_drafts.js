@@ -171,6 +171,7 @@ career_history = Class.extend({
     console.log(company_no)
     var company_section_html = `
     {{ list_of_career_history }}
+    {{ for career in list_of_career_history}}
     
       <div class="section_${company_no}">
       <h3 class="mx-auto">Hello, {{job_applicant.applicant_name}}, tell us about the ${stringifyNumber(company_no)} company you worked for!</h3>
