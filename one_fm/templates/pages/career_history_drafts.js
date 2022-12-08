@@ -167,64 +167,83 @@ career_history = Class.extend({
       $('.back-btn').fadeIn();
       this.back_career_history(company_no);
     }
-    console.log("hello")
-    console.log(company_no)
-    var company_section_html = `
-    {{ list_of_career_history }}
-    {{ for career in list_of_career_history}}
-    
-      <div class="section_${company_no}">
-      <h3 class="mx-auto">Hello, {{job_applicant.applicant_name}}, tell us about the ${stringifyNumber(company_no)} company you worked for!</h3>
-      <div class="row mx-auto col-lg-12 col-md-12 mb-3 company_${company_no} border-top">
-          <div class="my-3 col-lg-12 col-md-12"></div>
-          <label class="form-label">What was the company's name? </label>
-          <input type="text" class="form-control company_${company_no}_name" placeholder="Enter the ${stringifyNumber(company_no)} Company Name"/>
+
+    // var name = "{{ job_applicant.name }}"
+    // var draft_career = get_company(name, company_no)
+    // console.log(draft_career)
+    frappe.call({
+      method: "one_fm.templates.pages.career_history.get_company_history",
+      args: {
+        name: "{{ job_applicant.name }}",
+        company_no: company_no
+      },
+      callback: function(r){
+        if (r.message){
+          var career_history = r.message;
+          console.log(career_history)
+          var company_section_html = `
+            <div class="section_${company_no}">
+            <h3 class="mx-auto">Hello, {{job_applicant.applicant_name}}, tell us about the ${stringifyNumber(company_no)} company you worked for!</h3>
+            <div class="row mx-auto col-lg-12 col-md-12 mb-3 company_${company_no} border-top">
+                <div class="my-3 col-lg-12 col-md-12"></div>
+                <label class="form-label">What was the company's name? </label>
+                <input type="text" class="form-control company_${company_no}_name" placeholder="Enter the ${stringifyNumber(company_no)} Company Name" value="${career_history.company_name}"/>
+                </div>
+                <div class="my-3 col-lg-12 col-md-12">
+                <label class="form-label">Which country did you get employed in?</label> <br>
+                  <select class="form-control country_of_company_${company_no}">
+                  <option>Select Country</option>
+                  {% for country in country_list %}
+                  <option>{{country.name}}</option>
+                  {% endfor %}
+                  <option value="${career_history.country_of_employment}" selected>${career_history.country_of_employment}</option>
+                </select>
+                </div>
+                <div class="mb-3 col-lg-12 col-md-12">
+                <label class="form-label">When did you join the company?</label>
+                <input type="date" class="form-control joined_company${company_no}"/ value="${career_history.start_date}">
+                </div>
+                <div class="mb-3 col-lg-12 col-md-12">
+                <label class="form-label">What was your first salary at this company?</label>
+                <input type="text" class="form-control salary_company${company_no}" placeholder="Enter your Salary in KWD"/ value="${career_history.monthly_salary_in_kwd}">
+                </div>
+          
+              <div class="col-lg-12 col-md-12">
+                <hr class="my-5"/>
+              </div>
+          
+              <div class="mb-3 col-lg-12 col-md-12">
+                <label  class="form-label">What was your starting job title?</label>
+                <input type="text" class="form-control starting_job_title_company_${company_no}" placeholder="Enter the Job Title"/ value="${career_history.job_title}">
+              </div>
+          
+                <div class="mt-5 promotion_section_${company_no}" style="width: 100%">
+          
+                </div>
+          
+              <div class="col-lg-12 col-md-12 mb-3">
+                <label>Are You still working for the same company?</label>
+                <select class="custom-select still_working_on_same_company_${company_no}">
+                <option value="0">Choose</option>
+                <option value="1">Yes</option>
+                <option value="2">No</option>
+                <option selected>${career_history.did_you_leave_the_job}</option>
+                </select>
+              </div>
           </div>
-          <div class="my-3 col-lg-12 col-md-12">
-          <label class="form-label">Which country did you get employed in?</label> <br>
-            <select class="form-control country_of_company_${company_no}">
-            <option>Select Country</option>
-            {% for country in country_list %}
-            <option>{{country.name}}</option>
-            {% endfor %}
-          </select>
-          </div>
-          <div class="mb-3 col-lg-12 col-md-12">
-          <label class="form-label">When did you join the company?</label>
-          <input type="date" class="form-control joined_company${company_no}"/>
-          </div>
-          <div class="mb-3 col-lg-12 col-md-12">
-          <label class="form-label">What was your first salary at this company?</label>
-          <input type="text" class="form-control salary_company${company_no}" placeholder="Enter your Salary in KWD"/>
-          </div>
-    
-        <div class="col-lg-12 col-md-12">
-          <hr class="my-5"/>
-        </div>
-    
-        <div class="mb-3 col-lg-12 col-md-12">
-          <label  class="form-label">What was your starting job title?</label>
-          <input type="text" class="form-control starting_job_title_company_${company_no}" placeholder="Enter the Job Title"/>
-        </div>
-    
-          <div class="mt-5 promotion_section_${company_no}" style="width: 100%">
-    
-          </div>
-    
-        <div class="col-lg-12 col-md-12 mb-3">
-          <label>Are You still working for the same company?</label>
-          <select class="custom-select still_working_on_same_company_${company_no}">
-          <option value="0">Choose</option>
-          <option value="1">Yes</option>
-          <option value="2">No</option>
-          </select>
-        </div>
-    </div>
-    </div>`;
-    $(".main_section").append(company_section_html);
-    TOTAL_COMPANY_NO += 1;
-    this.set_promotion_section_html(company_no, 1);
-    this.on_change_still_working_on_same_company(company_no);
+          </div>`;
+          $(".main_section").append(company_section_html);
+          TOTAL_COMPANY_NO += 1;
+          this.set_promotion_section_html(company_no, 1);
+          this.on_change_still_working_on_same_company(company_no);
+
+        }
+        
+      }
+
+    })
+
+
   },
   next_career_history: function(company_no) {
     // Move to Next Career History
@@ -293,8 +312,9 @@ career_history = Class.extend({
           type: "POST",
           method: "one_fm.templates.pages.career_history.save_as_drafts",
           args: {
-            job_applicant: $('#job_applicant').attr("data"),
-            career_history_details: data
+            job_applicant: "{{job_applicant.name}}",
+            career_history_details: data,
+            
           },
           btn: this,
           callback: function(r){

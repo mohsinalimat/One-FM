@@ -6,6 +6,7 @@ from frappe.utils import get_url, getdate, today
 from one_fm.one_fm.doctype.magic_link.magic_link import authorize_magic_link, send_magic_link
 from one_fm.utils import set_expire_magic_link
 
+
 def get_context(context):
     context.title = _("Career History")
 
@@ -43,7 +44,7 @@ def create_career_history_from_portal(job_applicant, career_history_details):
     if check_career_history is not None:
         career_history = frappe.get_doc("Career History", check_career_history)
     else:
-        career_history = create_new_career_history(job_applicant, career_history_details)
+        career_history = create_career_history(job_applicant, career_history_details)
     career_history.docstatus = 1
     career_history.save(ignore_permissions=True)
     set_expire_magic_link('Job Applicant', job_applicant, 'Career History')
@@ -73,17 +74,17 @@ def send_career_history_magic_link(job_applicant, applicant_name, designation):
 
 @frappe.whitelist(allow_guest=True)
 def save_as_drafts(job_applicant, career_history_details):
-    career_history= create_new_career_history(job_applicant, career_history_details)
+    job_applicant_doc = frappe.get_doc("Job Applicant", job_applicant)
+    career_history= update_career_history(job_applicant_doc, career_history_details)
     career_history.docstatus = 0
     career_history.save(ignore_permissions=True)
     return True
 
 
-@frappe.whitelist()
-def create_new_career_history(job_applicant, career_history_details):
+@frappe.whitelist(allow_guest=True)
+def create_career_history(job_applicant, career_history_details):
     new_career_history = frappe.new_doc('Career History')
     new_career_history.job_applicant = job_applicant
-
     career_histories = json.loads(career_history_details)
     for history in career_histories:
         career_history_fields = ['company_name', 'country_of_employment', 'start_date', 'responsibility_one',
@@ -114,3 +115,63 @@ def create_new_career_history(job_applicant, career_history_details):
             company.why_do_you_plan_to_leave_the_job = history.get('reason_for_leaving_job')
 
     return new_career_history
+
+@frappe.whitelist(allow_guest=True)
+def update_career_history(job_applicant, career_history_details):
+    # try:
+    #     company_no = int(company_no)
+    # except:
+    #     frappe.throw("Company Number is not an integer !")
+
+    check = frappe.db.exists("Career History", {"job_applicant": job_applicant.name})
+    career_history = frappe.get_doc("Career History", check)
+    career_histories = json.loads(career_history_details)
+    for history in career_histories:
+        career_history_fields = ['company_name', 'country_of_employment', 'start_date', 'responsibility_one',
+            'responsibility_two', 'responsibility_three', 'job_title', 'monthly_salary_in_kwd']
+
+        company_check = career_history.career_history_company[0]
+        if company_check:
+            company = company_check
+        else:
+            company = career_history.append('career_history_company')
+        for field in career_history_fields:
+            company.set(field, history.get(field))
+
+        last_job_title = history.get('job_title')
+        last_salary = history.get('monthly_salary_in_kwd')
+        for promotion in history.get('promotions'):
+            company = career_history.append('career_history_company')
+            company.company_name = history.get('company_name')
+            company.job_title = last_job_title
+            if promotion.get('job_title'):
+                company.job_title = promotion.get('job_title')
+                last_job_title = promotion.get('job_title')
+            company.monthly_salary_in_kwd = last_salary
+            if promotion.get('monthly_salary_in_kwd'):
+                company.monthly_salary_in_kwd = promotion.get('monthly_salary_in_kwd')
+                last_salary = promotion.get('monthly_salary_in_kwd')
+            company.start_date = getdate(promotion.get('start_date'))
+        if history.get('left_the_company'):
+            company.end_date = history.get('left_the_company')
+        if history.get('reason_for_leaving_job'):
+            company.end_date = today()
+            company.why_do_you_plan_to_leave_the_job = history.get('reason_for_leaving_job')
+
+    return career_history
+
+@frappe.whitelist(allow_guest=True)
+def get_company_history(name, company_no):
+    company_no = int(company_no)
+    doc_name = frappe.db.exists({"doctype": "Career History", "job_applicant": name})
+    if not doc_name:
+        return {}
+    career_history = frappe.get_doc("Career History", doc_name)
+    try:
+        return career_history.career_history_company[company_no - 1]
+    except:
+        return {}
+
+
+    
+
