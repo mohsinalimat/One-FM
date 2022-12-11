@@ -295,9 +295,6 @@ career_history = Class.extend({
           callback: function(r){
             frappe.unfreeze();
             frappe.msgprint(frappe._("Career History Saved as drafts, you could finish up in your free time by revisiting this link."));
-            if(r.message){
-              window.location.href = "/career_history";
-            }
           }
         });
       }

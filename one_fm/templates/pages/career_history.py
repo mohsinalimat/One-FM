@@ -23,7 +23,7 @@ def get_context(context):
             context.applicant_career_history_draft = career_history
             context.list_of_career_history = career_history.career_history_company
             print(career_history)
-            print(career_history.career_history_company)
+            print(career_history.total_number_of_promotions_and_salary_changes)
 
 
     # Get Country List to the context to show in the portal
@@ -45,7 +45,7 @@ def create_career_history_from_portal(job_applicant, career_history_details):
         career_history = frappe.get_doc("Career History", check_career_history)
     else:
         career_history = create_career_history(job_applicant, career_history_details)
-    career_history.docstatus = 1
+    career_history.docstatus = 0
     career_history.save(ignore_permissions=True)
     set_expire_magic_link('Job Applicant', job_applicant, 'Career History')
     return True
@@ -124,17 +124,23 @@ def update_career_history(job_applicant, career_history_details):
     #     frappe.throw("Company Number is not an integer !")
 
     check = frappe.db.exists("Career History", {"job_applicant": job_applicant.name})
-    career_history = frappe.get_doc("Career History", check)
+    if check:
+        career_history = frappe.get_doc("Career History", check)
+        career_history.career_history.delete()
+    else:
+        career_history = frappe.new_doc("Career History")
+        career_history.job_applicant = job_applicant.name
+
     career_histories = json.loads(career_history_details)
     for history in career_histories:
         career_history_fields = ['company_name', 'country_of_employment', 'start_date', 'responsibility_one',
             'responsibility_two', 'responsibility_three', 'job_title', 'monthly_salary_in_kwd']
 
-        company_check = career_history.career_history_company[0]
-        if company_check:
-            company = company_check
-        else:
-            company = career_history.append('career_history_company')
+        # company_check = career_history.career_history_company[0]
+        # if company_check:
+        #     company = company_check
+        # else:
+        company = career_history.append('career_history_company')
         for field in career_history_fields:
             company.set(field, history.get(field))
 
@@ -162,15 +168,22 @@ def update_career_history(job_applicant, career_history_details):
 
 @frappe.whitelist(allow_guest=True)
 def get_company_history(name, company_no):
+    chosen_keys = ['company_name', 'job_title', 'monthly_salary_in_kwd', 'country_of_employment', 
+                    'start_date', 'end_date', 'responsibility_one', 'responsibility_two', 'responsibility_three',
+                    'major_accomplishment', 'did_you_leave_the_job', 'reason_for_leaving_job', 'why_do_you_plan_to_leave_the_job']
+    test = {}
     company_no = int(company_no)
     doc_name = frappe.db.exists({"doctype": "Career History", "job_applicant": name})
     if not doc_name:
         return {}
     career_history = frappe.get_doc("Career History", doc_name)
-    try:
-        return career_history.career_history_company[company_no - 1]
-    except:
-        return {}
+    for ind, career_hist in enumerate(career_history.career_history_company):
+        test[ind + 1] = {}
+        for key, value in vars(career_hist).items():
+            if key in chosen_keys:
+                test[ind + 1].update({key: value}) 
+    
+    return test
 
 
     
