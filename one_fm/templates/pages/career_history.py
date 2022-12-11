@@ -126,7 +126,9 @@ def update_career_history(job_applicant, career_history_details):
     check = frappe.db.exists("Career History", {"job_applicant": job_applicant.name})
     if check:
         career_history = frappe.get_doc("Career History", check)
-        career_history.career_history.delete()
+
+        for career in career_history.career_history_company:
+            career.delete()
     else:
         career_history = frappe.new_doc("Career History")
         career_history.job_applicant = job_applicant.name

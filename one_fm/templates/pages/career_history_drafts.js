@@ -82,7 +82,7 @@ career_history = Class.extend({
       }
     });
   },
-  set_promotion_section_html: function(company_no, promotion_no, career_history) {
+  set_promotion_section_html: function(company_no, promotion_no, career_history, previous_career_hist) {
     var next_promotion_details_html = `<div class="mx-auto col-lg-12 col-md-12 mb-12 promotion_section_${company_no}${promotion_no}">
         <label  class="form-label">${promotion_no>1 ?
             'So {{job_applicant.applicant_name}}, after your promotion/salary increase did you get another promotion or salary increase?':
@@ -180,13 +180,14 @@ career_history = Class.extend({
       callback: function(r){
         if (r.message){
           var career_history = r.message[company_no];
-          var previous_car_hist = r.message[company_no - 1];
-          console.log(career_history.company_name === previous_car_hist)
+          var next_career_hist = r.message[company_no + 1];
+          console.log(career_history.company_name === next_career_hist.company_name)
           console.log(career_history)
-          console.log(previous_car_hist)
+          console.log(previous_career_hist)
           // console.log(career_history.company_no)
 
           // if (career_history.company_name == previous_car_hist.com){}
+          if (career_history.company_name != next_career_hist.company_name){
           var company_section_html = `
             <div class="section_${company_no}">
             <h3 class="mx-auto">Hello, {{job_applicant.applicant_name}}, tell us about the ${stringifyNumber(company_no)} company you worked for!</h3>
@@ -240,9 +241,10 @@ career_history = Class.extend({
           </div>`;
           $(".main_section").append(company_section_html);
           TOTAL_COMPANY_NO += 1;
-          this.set_promotion_section_html(company_no, 1, career_history);
+          this.set_promotion_section_html(company_no, 1, career_history, next_career_hist);
           this.on_change_still_working_on_same_company(company_no);
-
+          
+          }
         }
         
       }
